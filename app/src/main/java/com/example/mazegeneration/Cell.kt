@@ -1,6 +1,6 @@
 package com.example.mazegeneration
 
-class Cell(var col:Int, var rows: Int){
+class Cell(var col:Int, var row: Int){
 
     var topWall: Boolean = true
     var leftWall: Boolean = true

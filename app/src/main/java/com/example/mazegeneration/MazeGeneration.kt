@@ -7,24 +7,24 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.properties.Delegates
 
-class MazeGeneration : View {
+class MazeGeneration(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private val cols = 7
     private val rows = 10
 
     private var cellSize by Delegates.notNull<Float>()
     private var hMargin by Delegates.notNull<Float>()
     private var vMargin by Delegates.notNull<Float>()
+    private var random = Random()
 
-    //private lateinit var cells: Array<Array<Cell>>
-    //var cells = Cell[cols][rows]
-    private var cells = arrayOf<Array<Cell>>()
+    private var cells =Array(7){Array(10){Cell(7,10)} }
 
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
+    init {
         createMaze()
     }
-
 
     private val wallPaint = Paint().apply {
         style = Paint.Style.STROKE
@@ -33,31 +33,108 @@ class MazeGeneration : View {
         Log.d("bk", "wallPaint")
     }
 
-    private fun createMaze() {
-        //cells = Cell[cols][rows]
-        cells[cols][rows]
+    private fun getNeighbour(cell: Cell) : Cell?{
+        val neighbours = ArrayList<Cell>()
 
-        Log.d("bk", "createMaze")
-        for (x in 0 until cols) {
-            for (y in 0 until rows) {
-                Log.d("bk", "createMaze/Cell")
-                cells[x][y] = Cell(x,y)
-                //cells[x][y]
+        // left neighbour
+        if (cell.col > 0){
+            if (!cells[cell.col-1][cell.row].visited){
+                neighbours.add(cells[cell.col-1][cell.row])
             }
         }
+        // right neighbour
+        if (cell.col < cols-1){
+            if (!cells[cell.col+1][cell.row].visited){
+                neighbours.add(cells[cell.col+1][cell.row])
+            }
+        }
+        // top neighbour
+        if (cell.row > 0){
+            if (!cells[cell.col][cell.row-1].visited){
+                neighbours.add(cells[cell.col][cell.row-1])
+            }
+        }
+        // bottom neighbour
+        if (cell.row < rows-1){
+            if (!cells[cell.col][cell.row+1].visited){
+                neighbours.add(cells[cell.col][cell.row+1])
+            }
+        }
+
+        if (neighbours.size > 0){
+            val index = random.nextInt(neighbours.size)
+            return neighbours[index]
+        }
+
+        // if its neighbors are equal to zero, return null
+        return null
+    }
+
+    private fun removeWall(current: Cell, next: Cell){
+        // down
+        if (current.col == next.col && current.row == next.row+1){
+            current.topWall = false
+            next.bottomWall = false
+        }
+        //down
+        if (current.col == next.col && current.row == next.row-1){
+            current.bottomWall = false
+            next.topWall = false
+        }
+        // right
+        if (current.col == next.col+1 && current.row == next.row){
+            current.leftWall = false
+            next.rightWall = false
+        }
+        // right
+        if (current.col == next.col-1 && current.row == next.row){
+            current.rightWall = false
+            next.leftWall = false
+        }
+    }
+
+    private fun createMaze() {
+
+
+        val stack = Stack<Cell>()
+        var currentPosition: Cell
+        var nextPosition: Cell?
+
+        for (x in 0 until cols) {
+            for (y in 0 until rows) {
+                cells[x][y] = Cell(x,y)
+            }
+        }
+
+        // Starting point
+        currentPosition = cells[0][0]
+        currentPosition.visited =true
+        do {
+                nextPosition = getNeighbour(currentPosition)
+
+                if (nextPosition != null){
+                    removeWall(currentPosition,nextPosition)
+                    stack.push(currentPosition)
+                    currentPosition = nextPosition
+                    currentPosition.visited = true
+                }else{
+                    currentPosition = stack.pop()
+                }
+
+        }while (stack.isNotEmpty())
+
 
     }
 
     override fun onDraw(canvas: Canvas) {
-        //super.onDraw(canvas)
         canvas.drawColor(Color.GREEN)
 
         Log.d("bk", "onDraw")
         val width = width
         val height = height
 
-        val widthHeight: Double = (width / height).toDouble()
-        val colsRows: Double = (cols / rows).toDouble()
+        val widthHeight: Double = width.toDouble() / height.toDouble()
+        val colsRows: Double = cols.toDouble() / rows.toDouble()
 
         cellSize = if (widthHeight < colsRows) {
             //vertical
@@ -117,6 +194,8 @@ class MazeGeneration : View {
             }
         }
     }
+
+
 
 
 }
