@@ -255,7 +255,14 @@ class MazeGeneration(context: Context, attrs: AttributeSet) : View(context, attr
                     player = cells[player.col+1][player.row]
                 }
         }
+        checkExit()
         invalidate()
+    }
+
+    private fun checkExit(){
+        if (player == exit){
+            createMaze()
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
